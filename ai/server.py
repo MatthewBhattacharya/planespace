@@ -43,23 +43,16 @@ def _build_mcts():
     return MacroMCTS(n_sims=200, n_cands=20, value_net=value_net, value_blend=value_blend)
 
 
-def _build_agent(ai_mode: str):
-    if ai_mode == 'greedy':
-        print('AI mode: greedy (highest immediate score)')
-        return GreedyAI()
-    print('AI mode: MCTS')
-    return _build_mcts()
-
-
 def _agent_choose(agent, state: State):
     if isinstance(agent, GreedyAI):
         return agent.choose(state)
     return agent.choose(state, temperature=0.0)
 
 
-# Parsed from argv below
-_ai_mode = 'greedy' if '--ai' in sys.argv and sys.argv[sys.argv.index('--ai') + 1] == 'greedy' else 'mcts'
-agent = _build_agent(_ai_mode)
+greedy_agent = GreedyAI()
+mcts_agent = _build_mcts()
+_ai_mode = 'greedy'  # default shown in dropdown
+print('Both agents ready (greedy + MCTS). UI dropdown selects per move.')
 
 STATIC = {
     '/':            ('index.html', 'text/html'),
@@ -145,7 +138,9 @@ class Handler(BaseHTTPRequestHandler):
         try:
             data = json.loads(body)
             state = _parse_state(data)
-            pts = _agent_choose(agent, state)
+            mode = data.get('ai_mode', _ai_mode)
+            active = greedy_agent if mode == 'greedy' else mcts_agent
+            pts = _agent_choose(active, state)
             if pts is None:
                 self._send_json({'pass': True})
             else:

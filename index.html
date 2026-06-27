@@ -101,8 +101,12 @@ canvas{display:block;cursor:crosshair}
 
   <label style="display:flex;align-items:center;gap:8px;font-size:.78em;color:#7090b0;cursor:pointer;margin-top:2px">
     <input type="checkbox" id="ai-toggle" style="width:14px;height:14px;cursor:pointer">
-    <span>vs AI (Red = MacroMCTS)</span>
+    <span>vs AI (Red)</span>
   </label>
+  <select id="ai-mode" style="margin-top:2px;width:100%;background:#1a1a36;color:#8090c0;border:1px solid #2a2a5a;border-radius:5px;padding:4px 6px;font-size:.76em;cursor:pointer">
+    <option value="greedy">Greedy (fast — best immediate score)</option>
+    <option value="mcts">MCTS (slow — thinks ahead)</option>
+  </select>
   <div id="ai-status" style="font-size:.72em;color:#5a5a7a;font-style:italic;display:none">AI thinking…</div>
 
 </div>
@@ -708,6 +712,7 @@ function maybeAIMove() {
     scores: G.scores,
     player: G.player,
     passes: G.passes,
+    ai_mode: document.getElementById('ai-mode').value,
   };
 
   fetch(AI_URL, {method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(payload)})
