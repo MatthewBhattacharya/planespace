@@ -269,13 +269,10 @@ function isGemClaimed(g){ return G.claimedGems.includes(gemKey(g)); }
 
 function collinear3(a,b,c){ return crs(vec(a,b),vec(a,c))===0; }
 
-// True only if AB and CD share a horizontal or vertical overlapping segment.
-// Diagonal shared edges are allowed — only axis-aligned edges enforce territory borders.
+// True only if AB and CD overlap along more than a single shared point (a real shared edge)
 function edgesOverlap(a,b,c,d){
   if(!collinear3(a,b,c) || !collinear3(a,b,d)) return false;
-  const abx=b.x-a.x, aby=b.y-a.y;
-  if(abx!==0 && aby!==0) return false; // diagonal — not blocked
-  const len2=abx*abx+aby*aby;
+  const abx=b.x-a.x, aby=b.y-a.y, len2=abx*abx+aby*aby;
   if(len2===0) return false;
   const t = p => ((p.x-a.x)*abx + (p.y-a.y)*aby)/len2;
   const t2=t(c), t3=t(d);
@@ -369,14 +366,14 @@ function classify(pts){
 const BASE_TABLE = [4,6,6,8,8,10,10,12,12,12,14,14,14,14,16,16,16,16];
 // BONUS_TABLE[tier] = flat bonus (no size bracket).
 const BONUS_TABLE = {
-  'triangle':12,    'isosceles':20,      'right':26,
-  '45-45-90':32,    'equilateral':42,
+  'triangle':12,    'isosceles':18,      'right':22,
+  '45-45-90':26,    'equilateral':42,
   'quad':8,         'trapezoid':14,      'parallelogram':22,
   'rect-rhomb':28,  'square':22,
   'pentagon':12,    'convex-pent':26,
   'hexagon':18,     'convex-hex':36,     'ngon':10,
 };
-const GEM_BONUS = 15;
+const GEM_BONUS = 12;
 
 function scoreShape(pts, cls){
   const area = shoelace(pts);

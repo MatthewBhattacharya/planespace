@@ -13,14 +13,14 @@ GEM_SET = set(GEM_PTS)
 BASE_TABLE = [4, 6, 6, 8, 8, 10, 10, 12, 12, 12, 14, 14, 14, 14, 16, 16, 16, 16]  # index = round(area*2)-1
 # Flat bonus per shape type — no size bracket.
 BONUS_TABLE = {
-    'triangle': 12,    'isosceles': 20,      'right': 26,
-    '45-45-90': 32,    'equilateral': 42,
+    'triangle': 12,    'isosceles': 18,      'right': 22,
+    '45-45-90': 26,    'equilateral': 42,
     'quad': 8,         'trapezoid': 14,       'parallelogram': 22,
     'rect-rhomb': 28,  'square': 22,
     'pentagon': 12,    'convex-pent': 26,
     'hexagon': 18,     'convex-hex': 36,      'ngon': 10,
 }
-GEM_BONUS = 15
+GEM_BONUS = 12
 
 
 def vec(a, b):
@@ -125,13 +125,10 @@ def collinear3(a, b, c):
 
 
 def edges_overlap(a, b, c, d):
-    """True only if segments AB and CD share a horizontal or vertical overlapping segment.
-    Diagonal shared edges are allowed (only axis-aligned edges enforce territory borders)."""
+    """True only if segments AB and CD overlap along more than a single point."""
     if not collinear3(a, b, c) or not collinear3(a, b, d):
         return False
     abx, aby = b[0] - a[0], b[1] - a[1]
-    if abx != 0 and aby != 0:
-        return False  # diagonal segment — not blocked
     len2 = abx * abx + aby * aby
     if len2 == 0:
         return False
