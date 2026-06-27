@@ -408,7 +408,6 @@ function validate(newPts){
         return {ok:false,msg:'Duplicate vertices'};
 
   if(!isSimple(newPts)) return {ok:false,msg:'Edges cross — not a simple polygon'};
-  const n=newPts.length;
   for(let i=0;i<n;i++)
     if(collinear3(newPts[(i-1+n)%n],newPts[i],newPts[(i+1)%n]))
       return {ok:false,msg:'Collinear vertices — remove the middle point'};
