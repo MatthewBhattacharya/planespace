@@ -10,16 +10,17 @@ MAX_AREA = 9
 GEM_PTS = [(1, 1), (8, 1), (1, 8), (8, 8), (4, 4), (6, 3), (3, 6)]
 GEM_SET = set(GEM_PTS)
 
-BASE_TABLE = [2, 3, 3, 4, 4, 5, 5, 6, 6, 6, 7, 7, 7, 7, 8, 8, 8, 8]  # index = round(area*2)-1
+BASE_TABLE = [4, 6, 6, 8, 8, 10, 10, 12, 12, 12, 14, 14, 14, 14, 16, 16, 16, 16]  # index = round(area*2)-1
+# Flat bonus per shape type — no size bracket.
 BONUS_TABLE = {
-    'triangle': (10, 8, 5), 'isosceles': (14, 11, 7), 'right': (18, 14, 9),
-    '45-45-90': (22, 17, 11), 'equilateral': (28, 21, 14),
-    'quad': (6, 5, 3), 'trapezoid': (11, 8, 6), 'parallelogram': (15, 11, 8),
-    'rect-rhomb': (20, 15, 10), 'square': (30, 23, 15),
-    'pentagon': (10, 8, 5), 'convex-pent': (18, 14, 9),
-    'hexagon': (13, 10, 7), 'convex-hex': (24, 18, 12), 'ngon': (8, 6, 4),
+    'triangle': 12,    'isosceles': 20,      'right': 26,
+    '45-45-90': 32,    'equilateral': 42,
+    'quad': 8,         'trapezoid': 14,       'parallelogram': 22,
+    'rect-rhomb': 28,  'square': 22,
+    'pentagon': 12,    'convex-pent': 26,
+    'hexagon': 18,     'convex-hex': 36,      'ngon': 10,
 }
-GEM_BONUS = 10
+GEM_BONUS = 15
 
 
 def vec(a, b):
@@ -124,10 +125,13 @@ def collinear3(a, b, c):
 
 
 def edges_overlap(a, b, c, d):
-    """True only if segments AB and CD overlap along more than a single point."""
+    """True only if segments AB and CD share a horizontal or vertical overlapping segment.
+    Diagonal shared edges are allowed (only axis-aligned edges enforce territory borders)."""
     if not collinear3(a, b, c) or not collinear3(a, b, d):
         return False
     abx, aby = b[0] - a[0], b[1] - a[1]
+    if abx != 0 and aby != 0:
+        return False  # diagonal segment — not blocked
     len2 = abx * abx + aby * aby
     if len2 == 0:
         return False
@@ -228,19 +232,10 @@ def classify(pts):
     return {'n': n, 'tier': tier, 'names': names, 'conv': conv}
 
 
-def size_bracket(area):
-    if area <= 3:
-        return 0
-    if area <= 6:
-        return 1
-    return 2
-
-
 def score_shape(pts, cls, claimed_gems):
     area = shoelace(pts)
     base = BASE_TABLE[round(area * 2) - 1]
-    br = size_bracket(area)
-    bonus = BONUS_TABLE.get(cls['tier'], (0, 0, 0))[br]
+    bonus = BONUS_TABLE.get(cls['tier'], 0)
     new_gems = 0
     used_gems = 0
     for v in pts:

@@ -20,7 +20,7 @@ ACTION_SIZE = COLS * ROWS + 2  # 100 point-picks + PLACE + PASS
 PLACE_ACTION = COLS * ROWS
 PASS_ACTION = COLS * ROWS + 1
 MAX_PLIES = 400  # safety cutoff; real games end far sooner via the two-pass rule
-VALUE_NORM = 60.0  # squashes raw point totals into a comparable [-1,1] range
+VALUE_NORM = 100.0  # squashes raw point totals into a comparable [-1,1] range
 
 
 def idx_to_point(idx):
