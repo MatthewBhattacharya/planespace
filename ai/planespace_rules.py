@@ -254,6 +254,9 @@ def validate(new_pts, shapes, claimed_gems, player):
         return False, 'duplicate vertices'
     if not is_simple(new_pts):
         return False, 'not simple'
+    for i in range(n):
+        if collinear3(new_pts[(i - 1) % n], new_pts[i], new_pts[(i + 1) % n]):
+            return False, 'collinear consecutive vertices'
     area = shoelace(new_pts)
     if area < MIN_AREA:
         return False, 'area too small'
