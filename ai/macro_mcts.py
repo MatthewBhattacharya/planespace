@@ -249,7 +249,6 @@ class MacroMCTS:
     def _simulate(self, root: MacroNode):
         """Run one UCT simulation: select → expand → rollout → backup."""
         node = root
-        # path: list of (node, action_idx) pairs that were traversed
         path: List[Tuple[MacroNode, int]] = []
 
         # --- Selection ---
