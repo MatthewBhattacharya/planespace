@@ -71,27 +71,28 @@ def _apply_pass(state: State) -> State:
 def generate_candidates(state: State, n_cands: int = 25, n_attempts: int = 300) -> List[list]:
     """Generate up to n_cands valid polygon placements for state.player.
 
-    Samples shapes across all sizes (triangle through hexagon) with equal
-    attempt budget per size, then sorts by immediate score descending so high-
-    value placements appear early.  Equal per-size budget ensures the AI
-    considers quads, pentagons, and hexagons even though they're harder to
-    find valid instances of.
+    Uses separate per-size buckets so triangles can't crowd out quads/pentagons/
+    hexagons. Each size gets an equal share of output slots and an equal attempt
+    budget. After filling per-size quotas, remaining slots go to the
+    highest-scoring candidates across all sizes.
     """
-    seen = set()
-    cands = []
     shapes = state.shapes
     claimed_gems = state.claimed_gems
     player = state.player
 
-    # Equal budget per size (3-6 vertices)
     sizes = [3, 4, 5, 6]
-    per_size = n_attempts // len(sizes)
+    per_size_cap = max(1, n_cands // len(sizes))   # guaranteed slots per size
+    per_size_attempts = n_attempts // len(sizes)
+
+    def _score(pts):
+        cls = classify(pts)
+        return score_shape(pts, cls, claimed_gems)['total']
+
+    seen = set()
+    buckets = {n: [] for n in sizes}
 
     for n_verts in sizes:
-        count_this_size = 0
-        for _ in range(per_size):
-            if len(cands) >= n_cands:
-                break
+        for _ in range(per_size_attempts):
             pts = random.sample(ALL_POINTS, n_verts)
             key = tuple(sorted(pts))
             if key in seen:
@@ -99,19 +100,20 @@ def generate_candidates(state: State, n_cands: int = 25, n_attempts: int = 300) 
             seen.add(key)
             ok, _ = validate(pts, shapes, claimed_gems, player)
             if ok:
-                cands.append(pts)
-                count_this_size += 1
+                buckets[n_verts].append(pts)
 
-    if not cands:
-        return cands
+    # Take top per_size_cap from each bucket, then fill remaining with best overall
+    guaranteed = []
+    overflow = []
+    for n_verts in sizes:
+        ranked = sorted(buckets[n_verts], key=_score, reverse=True)
+        guaranteed.extend(ranked[:per_size_cap])
+        overflow.extend(ranked[per_size_cap:])
 
-    def _score(pts):
-        cls = classify(pts)
-        sc = score_shape(pts, cls, claimed_gems)
-        return sc['total']
-
-    cands.sort(key=_score, reverse=True)
-    return cands
+    overflow.sort(key=_score, reverse=True)
+    result = guaranteed + overflow
+    result.sort(key=_score, reverse=True)
+    return result[:n_cands]
 
 
 # ---------------------------------------------------------------------------
@@ -215,9 +217,11 @@ class MacroMCTS:
         return fast_rollout(state)
 
     def _build_actions(self, state: State) -> list:
-        """Generate action list: [None (PASS)] + [candidate placements]."""
+        """Generate action list. PASS only included when no placements found."""
         cands = generate_candidates(state, n_cands=self.n_cands)
-        return [None] + cands  # index 0 = PASS
+        if not cands:
+            return [None]  # PASS only when truly stuck
+        return cands
 
     def choose(self, state: State, temperature: float = 0.0) -> Optional[list]:
         """Return the best polygon to place (list of (x,y)), or None to PASS."""

@@ -2,11 +2,13 @@
 
 Usage:
     cd ~/geometry-game/ai
-    python3 server.py           # starts on http://localhost:8765/
-    python3 server.py 8080      # custom port
+    python3 server.py                  # MCTS + value net (default)
+    python3 server.py --ai greedy      # greedy best-immediate-score
+    python3 server.py 8080             # custom port
+    python3 server.py 8080 --ai greedy # both
 
 Then open http://localhost:8765/ in a browser (Windows browser works from WSL).
-Toggle "vs AI" in the sidebar to play against the MacroMCTS agent as Red.
+Toggle "vs AI" in the sidebar to play against the agent as Red.
 """
 
 import json
@@ -18,11 +20,12 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 from planespace_env import State
 from macro_mcts import MacroMCTS
+from greedy_ai import GreedyAI
 
 GAME_ROOT = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..')
 
-# Load value network if a trained checkpoint exists
 _VALUE_CKPT = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'runs', 'macro_value', 'value_net.pt')
+
 
 def _build_mcts():
     value_net = None
@@ -33,13 +36,30 @@ def _build_mcts():
         value_net = PlanespaceNet()
         value_net.load_state_dict(torch.load(_VALUE_CKPT, map_location='cpu'))
         value_net.eval()
-        value_blend = 0.8
+        value_blend = 1.0
         print(f'Loaded value network from {_VALUE_CKPT}')
     else:
         print('No value network found — using pure rollout evaluation')
     return MacroMCTS(n_sims=200, n_cands=20, value_net=value_net, value_blend=value_blend)
 
-mcts = _build_mcts()
+
+def _build_agent(ai_mode: str):
+    if ai_mode == 'greedy':
+        print('AI mode: greedy (highest immediate score)')
+        return GreedyAI()
+    print('AI mode: MCTS')
+    return _build_mcts()
+
+
+def _agent_choose(agent, state: State):
+    if isinstance(agent, GreedyAI):
+        return agent.choose(state)
+    return agent.choose(state, temperature=0.0)
+
+
+# Parsed from argv below
+_ai_mode = 'greedy' if '--ai' in sys.argv and sys.argv[sys.argv.index('--ai') + 1] == 'greedy' else 'mcts'
+agent = _build_agent(_ai_mode)
 
 STATIC = {
     '/':            ('index.html', 'text/html'),
@@ -125,7 +145,7 @@ class Handler(BaseHTTPRequestHandler):
         try:
             data = json.loads(body)
             state = _parse_state(data)
-            pts = mcts.choose(state, temperature=0.0)
+            pts = _agent_choose(agent, state)
             if pts is None:
                 self._send_json({'pass': True})
             else:
@@ -135,10 +155,11 @@ class Handler(BaseHTTPRequestHandler):
 
 
 def main():
-    port = int(sys.argv[1]) if len(sys.argv) > 1 else 8765
+    args = [a for a in sys.argv[1:] if not a.startswith('--') and a != 'greedy']
+    port = int(args[0]) if args else 8765
     server = HTTPServer(('', port), Handler)
     print(f'Planespace AI server running at http://localhost:{port}/')
-    print(f'  Toggle "vs AI" in the sidebar to play against the MacroMCTS agent.')
+    print(f'  Toggle "vs AI" in the sidebar to play against the agent.')
     print(f'  Press Ctrl+C to stop.')
     try:
         server.serve_forever()

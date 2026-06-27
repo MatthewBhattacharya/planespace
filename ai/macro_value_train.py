@@ -77,7 +77,7 @@ def collect_game(mcts: MacroMCTS):
 
 def _worker_collect(args):
     """Top-level function (picklable) for ProcessPoolExecutor."""
-    n_games, n_sims, n_cands, seed, ckpt_path = args
+    n_games, n_sims, n_cands, seed, ckpt_path, value_blend = args
     import torch as _torch
     _torch.set_num_threads(1)
     random.seed(seed)
@@ -92,7 +92,7 @@ def _worker_collect(args):
         value_net.eval()
 
     mcts = MacroMCTS(n_sims=n_sims, n_cands=n_cands,
-                     value_net=value_net, value_blend=0.8 if value_net else 0.0)
+                     value_net=value_net, value_blend=value_blend if value_net else 0.0)
 
     all_examples = []
     all_scores = []
@@ -127,7 +127,7 @@ def value_train_step(net, optimizer, batch):
 # ---------------------------------------------------------------------------
 
 def main(num_iters, games_per_iter, n_sims, n_cands, workers,
-         batch_size, train_steps, buffer_size, lr, weight_decay, out_dir, seed):
+         batch_size, train_steps, buffer_size, lr, weight_decay, out_dir, seed, value_blend):
     random.seed(seed)
     np.random.seed(seed)
     torch.manual_seed(seed)
@@ -147,6 +147,7 @@ def main(num_iters, games_per_iter, n_sims, n_cands, workers,
     buffer = []
     t_start = time.time()
     games_done = 0
+    best_loss = float('inf')
 
     with ProcessPoolExecutor(max_workers=workers) as pool:
         for it in range(1, num_iters + 1):
@@ -154,7 +155,7 @@ def main(num_iters, games_per_iter, n_sims, n_cands, workers,
             per_worker = max(1, games_per_iter // workers)
             base_seed = seed * 1_000_000 + it * workers
             tasks = [(per_worker, n_sims, n_cands, base_seed + w,
-                      ckpt_path if os.path.exists(ckpt_path) else None)
+                      ckpt_path if os.path.exists(ckpt_path) else None, value_blend)
                      for w in range(workers)]
             results = list(pool.map(_worker_collect, tasks))
 
@@ -183,6 +184,9 @@ def main(num_iters, games_per_iter, n_sims, n_cands, workers,
             torch.save(net.state_dict(), ckpt_path)
             if it % 5 == 0:
                 torch.save(net.state_dict(), os.path.join(out_dir, f'value_net_iter{it}.pt'))
+            if not np.isnan(vloss) and vloss < best_loss:
+                best_loss = vloss
+                torch.save(net.state_dict(), os.path.join(out_dir, 'value_net_best.pt'))
 
             with open(log_path, 'a', newline='') as f:
                 csv.writer(f).writerow([it, games_done, round(mean_margin, 2),
@@ -234,7 +238,8 @@ if __name__ == '__main__':
     p.add_argument('--weight-decay', type=float, default=1e-4)
     p.add_argument('--out-dir', type=str, default='runs/macro_value')
     p.add_argument('--seed', type=int, default=0)
+    p.add_argument('--value-blend', type=float, default=1.0)
     args = p.parse_args()
     main(args.num_iters, args.games_per_iter, args.n_sims, args.n_cands,
          args.workers, args.batch_size, args.train_steps, args.buffer_size,
-         args.lr, args.weight_decay, args.out_dir, args.seed)
+         args.lr, args.weight_decay, args.out_dir, args.seed, args.value_blend)

@@ -6,6 +6,7 @@ verify against the browser version and easy to re-sync if the rules change.
 
 COLS = ROWS = 10
 MAX_VERTS = 8
+MIN_AREA = 1
 MAX_AREA = 9
 GEM_PTS = [(1, 1), (8, 1), (1, 8), (8, 8), (4, 4), (6, 3), (3, 6)]
 GEM_SET = set(GEM_PTS)
@@ -254,8 +255,8 @@ def validate(new_pts, shapes, claimed_gems, player):
     if not is_simple(new_pts):
         return False, 'not simple'
     area = shoelace(new_pts)
-    if area == 0:
-        return False, 'zero area'
+    if area < MIN_AREA:
+        return False, 'area too small'
     if area > MAX_AREA:
         return False, 'area too big'
     for sh in shapes:

@@ -117,52 +117,45 @@ canvas{display:block;cursor:crosshair}
   <button id="close-rules">✕ Close</button>
   <h2>Planespace — Rules</h2>
   <h3>Goal</h3>
-  <p>Place polygons on the grid to score the most points. Score depends on the <em>area</em> of your shape AND its geometric properties.</p>
+  <p>Place polygons on the grid to score the most points. Score = Base (by area) + Shape Bonus (by type) + Gem Bonus.</p>
   <h3>On Your Turn</h3>
   <ul>
-    <li>Click 3–8 grid dots to select vertices</li>
-    <li>Click <strong>Place Shape</strong> to lock it in</li>
-    <li>Shapes may share edges/vertices but cannot overlap interiors</li>
-    <li>If you cannot place, click <strong>Pass</strong></li>
-    <li>Two consecutive passes end the game</li>
+    <li>Click 3–8 grid dots to select vertices, then click <strong>Place Shape</strong></li>
+    <li>Shapes cannot overlap each other's interiors</li>
+    <li>Your shape cannot share a full edge with an opponent's shape (touching at a single point is fine)</li>
+    <li>Area must be between 1 and 9 grid-unit²</li>
+    <li>If you cannot place, click <strong>Pass</strong> — two consecutive passes end the game</li>
   </ul>
-  <h3>Scoring — pure lookup, no math beyond addition</h3>
-  <p><strong>Total</strong> = Base Score (by area) + Shape Bonus (by type &amp; size bracket) + Gem Bonus. No square roots, no multiplying — just find your numbers on the tables below and add them up.</p>
-  <p><strong>Area cap:</strong> No single shape may have area &gt; 9 grid-unit² (prevents one-move board domination).</p>
-  <p><strong>Base Score Table</strong> (by area):</p>
+  <h3>Base Score — by area</h3>
   <table>
-    <tr><th>Area</th><th>0.5</th><th>1</th><th>1.5</th><th>2</th><th>2.5</th><th>3</th><th>3.5</th><th>4</th><th>4.5</th><th>5</th><th>5.5</th><th>6</th><th>6.5</th><th>7</th><th>7.5</th><th>8</th><th>8.5</th><th>9</th></tr>
-    <tr><td>Score</td><td>2</td><td>3</td><td>3</td><td>4</td><td>4</td><td>5</td><td>5</td><td>6</td><td>6</td><td>6</td><td>7</td><td>7</td><td>7</td><td>7</td><td>8</td><td>8</td><td>8</td><td>8</td></tr>
+    <tr><th>Area</th><th>1</th><th>1.5</th><th>2</th><th>2.5</th><th>3</th><th>3.5</th><th>4</th><th>4.5</th><th>5</th><th>5.5</th><th>6</th><th>6.5</th><th>7</th><th>7.5</th><th>8</th><th>8.5</th><th>9</th></tr>
+    <tr><td>Base</td><td>6</td><td>6</td><td>8</td><td>8</td><td>10</td><td>10</td><td>12</td><td>12</td><td>12</td><td>14</td><td>14</td><td>14</td><td>14</td><td>16</td><td>16</td><td>16</td><td>16</td></tr>
   </table>
-  <p><strong>Shape Bonus Table</strong> — by size bracket (Small: area ≤3, Medium: ≤6, Large: ≤9):</p>
+  <h3>Shape Bonus — flat per type (best tier wins)</h3>
   <table>
-    <tr><th>Shape (best tier wins)</th><th>Small</th><th>Medium</th><th>Large</th></tr>
-    <tr><td>Any Triangle</td><td>10</td><td>8</td><td>5</td></tr>
-    <tr><td>Isosceles Triangle</td><td>14</td><td>11</td><td>7</td></tr>
-    <tr><td>Right Triangle</td><td>18</td><td>14</td><td>9</td></tr>
-    <tr><td>45-45-90 Triangle</td><td>22</td><td>17</td><td>11</td></tr>
-    <tr><td>Equilateral Triangle ★ best</td><td>28</td><td>21</td><td>14</td></tr>
-    <tr><td>Any Quadrilateral</td><td>6</td><td>5</td><td>3</td></tr>
-    <tr><td>Trapezoid</td><td>11</td><td>8</td><td>6</td></tr>
-    <tr><td>Parallelogram</td><td>15</td><td>11</td><td>8</td></tr>
-    <tr><td>Rectangle or Rhombus</td><td>20</td><td>15</td><td>10</td></tr>
-    <tr><td>Square ★ best quad</td><td>30</td><td>23</td><td>15</td></tr>
-    <tr><td>Pentagon (non-convex)</td><td>10</td><td>8</td><td>5</td></tr>
-    <tr><td>Convex Pentagon</td><td>18</td><td>14</td><td>9</td></tr>
-    <tr><td>Hexagon (non-convex)</td><td>13</td><td>10</td><td>7</td></tr>
-    <tr><td>Convex Hexagon</td><td>24</td><td>18</td><td>12</td></tr>
-    <tr><td>7-8 sided (any)</td><td>8</td><td>6</td><td>4</td></tr>
+    <tr><th>Triangles</th><th>Bonus</th><th>Quads</th><th>Bonus</th></tr>
+    <tr><td>Any Triangle</td><td>+12</td><td>Any Quadrilateral</td><td>+8</td></tr>
+    <tr><td>Isosceles</td><td>+18</td><td>Trapezoid</td><td>+14</td></tr>
+    <tr><td>Right Triangle</td><td>+22</td><td>Parallelogram</td><td>+22</td></tr>
+    <tr><td>45-45-90</td><td>+26</td><td>Rectangle / Rhombus</td><td>+28</td></tr>
+    <tr><td>Equilateral ★</td><td>+42</td><td>Square</td><td>+22</td></tr>
   </table>
-  <p><strong>Gem Bonus:</strong> +10 per ★ Gem vertex used — but each Gem pays out only once, to whichever shape touches it first. Copying your opponent's gem-touching move earns nothing.</p>
-  <p><strong>Blocking:</strong> you may share an edge or vertex freely with your <em>own</em> shapes, but you may only touch an opponent's shape at a single vertex — sharing a full edge with their shape is not allowed.</p>
+  <table style="margin-top:6px">
+    <tr><th>Pentagons</th><th>Bonus</th><th>Hexagons / Other</th><th>Bonus</th></tr>
+    <tr><td>Pentagon</td><td>+12</td><td>Hexagon</td><td>+18</td></tr>
+    <tr><td>Convex Pentagon</td><td>+26</td><td>Convex Hexagon ★</td><td>+36</td></tr>
+    <tr><td></td><td></td><td>7–8 sided</td><td>+10</td></tr>
+  </table>
+  <h3>Gem Bonus</h3>
+  <p>Seven ★ Gem dots are marked on the grid. Each gem pays <strong>+12</strong> to the first shape that uses it as a vertex. Once claimed, a gem pays nothing to later shapes.</p>
   <h3>Geometry You'll Learn</h3>
   <ul>
-    <li><strong>Area</strong>: Shoelace formula — base score = √area × 28 (diminishing returns)</li>
-    <li><strong>Right triangle</strong>: a²+b²=c² — check with Pythagorean theorem</li>
-    <li><strong>45-45-90</strong>: isosceles right triangle — the two legs are equal</li>
+    <li><strong>Area</strong>: counted with the Shoelace formula — bigger shapes earn more base points</li>
+    <li><strong>Right triangle</strong>: one 90° corner — check with a²+b²=c²</li>
+    <li><strong>45-45-90</strong>: right triangle with two equal legs</li>
+    <li><strong>Equilateral</strong>: all three sides equal length (rare on a grid — very high bonus!)</li>
     <li><strong>Quad hierarchy</strong>: Square ⊂ Rect ∩ Rhombus ⊂ Parallelogram ⊂ Trapezoid</li>
-    <li><strong>Collinearity</strong>: 3 gems lie on one line — can you find which ones?</li>
-    <li><strong>Convexity</strong>: all cross products of edges share the same sign</li>
+    <li><strong>Convexity</strong>: no "dents" — all interior angles less than 180°</li>
   </ul>
 </div>
 </div>
@@ -183,7 +176,8 @@ const CW = PAD*2 + SP*(COLS-1);  // 38*2 + 56*9 = 580
 const CH = PAD*2 + SP*(ROWS-1);
 
 const GEM_PTS = [{x:1,y:1},{x:8,y:1},{x:1,y:8},{x:8,y:8},{x:4,y:4},{x:6,y:3},{x:3,y:6}];
-const MAX_AREA = 9; // anti-exploit: no single shape may have area > 9
+const MIN_AREA = 1;
+const MAX_AREA = 9;
 const P_COLORS  = ['#4a90d8','#d84a4a'];
 const P_FILL    = ['rgba(74,144,216,0.22)','rgba(216,74,74,0.22)'];
 const P_NAMES   = ['Blue','Red'];
@@ -411,7 +405,7 @@ function validate(newPts){
 
   if(!isSimple(newPts)) return {ok:false,msg:'Edges cross — not a simple polygon'};
   const area = shoelace(newPts);
-  if(area===0) return {ok:false,msg:'Zero area — collinear points'};
+  if(area<MIN_AREA) return {ok:false,msg:`Area ${area.toFixed(1)} too small (min ${MIN_AREA})`};
   if(area>MAX_AREA) return {ok:false,msg:`Area ${area.toFixed(1)} exceeds limit of ${MAX_AREA}`};
 
   for(const sh of G.shapes)
